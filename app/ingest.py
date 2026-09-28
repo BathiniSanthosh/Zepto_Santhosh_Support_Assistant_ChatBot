@@ -14,33 +14,51 @@ def ingest_documents():
 
         if collection is None:
             logger.error(
-                "Collection not available"
+                "Collection unavailable"
             )
             return
 
-        if collection.count() > 0:
+        current_count = collection.count()
 
+        logger.info(
+            f"Current collection count: {current_count}"
+        )
+
+        if current_count > 0:
             logger.info(
-                "Documents already exist"
+                "Documents already exist in Chroma"
+            )
+            return
+
+        project_root = Path(__file__).parent
+
+        docs_folder = project_root / "docs"
+
+        logger.info(
+            f"Looking for docs in: {docs_folder}"
+        )
+
+        if not docs_folder.exists():
+
+            logger.error(
+                f"Docs folder not found: {docs_folder}"
             )
 
             return
+
+        txt_files = list(
+            docs_folder.glob("*.txt")
+        )
+
+        logger.info(
+            f"Found {len(txt_files)} txt files"
+        )
 
         docs = []
         ids = []
         metadatas = []
 
-        docs_folder = Path("docs")
-
-        if not docs_folder.exists():
-
-            logger.error(
-                "docs folder missing"
-            )
-
-            return
-
-        for file in docs_folder.glob("*.txt"):
+        for file in txt_files:
 
             logger.info(
                 f"Reading {file.name}"
@@ -48,7 +66,13 @@ def ingest_documents():
 
             text = file.read_text(
                 encoding="utf-8"
-            )
+            ).strip()
+
+            if not text:
+                logger.warning(
+                    f"{file.name} is empty"
+                )
+                continue
 
             docs.append(text)
 
@@ -60,17 +84,27 @@ def ingest_documents():
                 }
             )
 
-        if docs:
+        if not docs:
 
-            collection.add(
-                ids=ids,
-                documents=docs,
-                metadatas=metadatas
+            logger.warning(
+                "No documents loaded"
             )
 
-            logger.info(
-                f"{len(docs)} documents added"
-            )
+            return
+
+        collection.add(
+            ids=ids,
+            documents=docs,
+            metadatas=metadatas
+        )
+
+        logger.info(
+            f"{len(docs)} documents inserted"
+        )
+
+        logger.info(
+            f"Collection count after insert: {collection.count()}"
+        )
 
     except Exception as e:
 
