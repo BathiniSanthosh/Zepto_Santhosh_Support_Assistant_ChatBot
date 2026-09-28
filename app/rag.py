@@ -21,11 +21,20 @@ def retrieve(question: str):
     try:
 
         if collection is None:
-
             return {
                 "answer": "Knowledge base unavailable.",
                 "sources": [],
-                "confidence": 0.0,
+                "confidence": 0.0
+            }
+
+        if collection.count() == 0:
+            return {
+                "answer": (
+                    "Knowledge base is empty. "
+                    "Please load documents first."
+                ),
+                "sources": [],
+                "confidence": 0.0
             }
 
         question_lower = question.lower().strip()
@@ -37,32 +46,15 @@ def retrieve(question: str):
             return {
                 "answer": (
                     "I am a Zepto Support Assistant. "
-                    "Please ask questions related to Zepto services."
+                    "Please ask Zepto-related questions only."
                 ),
                 "sources": [],
-                "confidence": 0.0,
-            }
-
-        count = collection.count()
-
-        logger.info(
-            f"Documents in collection: {count}"
-        )
-
-        if count == 0:
-
-            return {
-                "answer": (
-                    "Knowledge base is empty. "
-                    "No documents have been loaded yet."
-                ),
-                "sources": [],
-                "confidence": 0.0,
+                "confidence": 0.0
             }
 
         results = collection.query(
             query_texts=[question],
-            n_results=min(3, count)
+            n_results=min(3, collection.count())
         )
 
         logger.info(
@@ -79,41 +71,38 @@ def retrieve(question: str):
             [[]]
         )[0]
 
-        if not documents:
-
+        if len(documents) == 0:
             return {
                 "answer": (
-                    "Sorry, I could not find relevant information "
-                    "in the Zepto knowledge base."
+                    "Sorry, I could not find relevant "
+                    "information in the knowledge base."
                 ),
                 "sources": [],
-                "confidence": 0.0,
+                "confidence": 0.0
             }
 
         answer = "\n\n".join(documents)
 
-        sources = list(
-            set(
-                meta.get("source", "unknown")
-                for meta in metadatas
-                if meta
-            )
-        )
+        sources = []
+
+        for meta in metadatas:
+            if meta and "source" in meta:
+                sources.append(meta["source"])
 
         return {
             "answer": answer,
-            "sources": sources,
-            "confidence": 0.90,
+            "sources": list(set(sources)),
+            "confidence": 0.90
         }
 
     except Exception as e:
 
         logger.exception(
-            f"Retrieval failed: {e}"
+            f"Retrieval error: {e}"
         )
 
         return {
             "answer": f"Error: {str(e)}",
             "sources": [],
-            "confidence": 0.0,
+            "confidence": 0.0
         }
