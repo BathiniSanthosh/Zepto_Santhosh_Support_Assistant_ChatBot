@@ -17,8 +17,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-logger.info("Loading main.py")
-
 app = FastAPI(
     title="Zepto Support Assistant"
 )
@@ -28,11 +26,18 @@ app = FastAPI(
 def startup():
 
     logger.info(
-        "Application started"
+        "Application startup initiated"
     )
 
     try:
+
         ingest_documents()
+
+        count = collection.count()
+
+        logger.info(
+            f"Documents loaded: {count}"
+        )
 
     except Exception as e:
 
@@ -49,40 +54,38 @@ def root():
         count = collection.count()
 
         return {
-
-            "service":
-                "Zepto Support Assistant",
-
-            "status":
-                "healthy",
-
-            "documents_loaded":
-                count
+            "service": "Zepto Support Assistant",
+            "status": "healthy",
+            "documents_loaded": count
         }
 
-    except Exception:
+    except Exception as e:
+
+        logger.exception(
+            f"Health check failed: {e}"
+        )
 
         return {
-
-            "service":
-                "Zepto Support Assistant",
-
-            "status":
-                "database unavailable",
-
-            "documents_loaded":
-                0
+            "service": "Zepto Support Assistant",
+            "status": "database unavailable",
+            "documents_loaded": 0
         }
 
 
 @app.get("/stats")
 def stats():
 
-    return {
+    try:
 
-        "documents_loaded":
-            collection.count()
-    }
+        return {
+            "documents_loaded": collection.count()
+        }
+
+    except Exception:
+
+        return {
+            "documents_loaded": 0
+        }
 
 
 @app.post(
@@ -92,21 +95,17 @@ def stats():
 def ask(request: QueryRequest):
 
     logger.info(
-        f"Question: {request.question}"
+        f"Question received: {request.question}"
     )
 
     result = graph.invoke(
         {
-            "question":
-                request.question
+            "question": request.question
         }
     )
 
     return AnswerResponse(
-
         answer=result["answer"],
-
         sources=result["sources"],
-
         confidence=result["confidence"]
     )
