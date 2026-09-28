@@ -1,12 +1,31 @@
 import streamlit as st
+
 from rag import retrieve
+from ingest import ingest_documents
+from db import collection
+
+# Run ingestion once when app starts
+if collection is not None and collection.count() == 0:
+    ingest_documents()
 
 st.set_page_config(
     page_title="Zepto Support Assistant_ChatBot",
     page_icon="🤖"
 )
 
-st.title("🤖 Zepto Support Assistant_ChatBot")
+st.title("🤖 Zepto Support Assistant")
+
+# Debug info (remove later if desired)
+st.sidebar.header("System Status")
+
+if collection is not None:
+    st.sidebar.success(
+        f"Documents Loaded: {collection.count()}"
+    )
+else:
+    st.sidebar.error(
+        "Database unavailable"
+    )
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -44,6 +63,10 @@ if question:
             st.caption(
                 f"Sources: {', '.join(result['sources'])}"
             )
+
+        st.caption(
+            f"Confidence: {result['confidence']:.2f}"
+        )
 
     st.session_state.messages.append(
         {
