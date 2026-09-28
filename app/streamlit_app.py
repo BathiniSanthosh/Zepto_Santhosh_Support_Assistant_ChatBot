@@ -6,7 +6,7 @@ st.set_page_config(
     page_icon="🤖"
 )
 
-st.title("🤖 Zepto Support Assistant")
+st.title("🤖 Zepto Support Assistant_ChatBot")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
