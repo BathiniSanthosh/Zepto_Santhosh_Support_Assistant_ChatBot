@@ -14,11 +14,12 @@ try:
     )
 
     logger.info("ChromaDB connected")
-
-    # Debug info
-    total_chunks = collection.count()
-    logger.info(f"Total chunks in collection: {total_chunks}")
+    logger.info(
+        f"Total chunks in collection: {collection.count()}"
+    )
 
 except Exception as e:
-    logger.exception(f"Database initialization failed: {e}")
+    logger.exception(
+        f"Database initialization failed: {e}"
+    )
     collection = None
