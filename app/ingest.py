@@ -25,14 +25,17 @@ def ingest_documents():
         )
 
         if current_count > 0:
+
             logger.info(
-                "Documents already exist in Chroma"
+                "Documents already loaded"
             )
+
             return
 
-        project_root = Path(__file__).parent
-
-        docs_folder = project_root / "docs"
+        docs_folder = (
+            Path(__file__).resolve().parent
+            / "docs"
+        )
 
         logger.info(
             f"Looking for docs in: {docs_folder}"
@@ -70,7 +73,7 @@ def ingest_documents():
 
             if not text:
                 logger.warning(
-                    f"{file.name} is empty"
+                    f"Empty file: {file.name}"
                 )
                 continue
 
@@ -84,10 +87,10 @@ def ingest_documents():
                 }
             )
 
-        if not docs:
+        if len(docs) == 0:
 
             logger.warning(
-                "No documents loaded"
+                "No documents found to ingest"
             )
 
             return
