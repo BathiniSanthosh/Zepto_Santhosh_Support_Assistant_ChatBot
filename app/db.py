@@ -2,16 +2,12 @@ import logging
 import chromadb
 
 logging.basicConfig(level=logging.INFO)
-
 logger = logging.getLogger(__name__)
 
 logger.info("Loading db.py")
 
 try:
-
-    client = chromadb.PersistentClient(
-        path="./chroma_db"
-    )
+    client = chromadb.PersistentClient(path="./chroma_db")
 
     collection = client.get_or_create_collection(
         name="zepto_docs"
@@ -19,10 +15,10 @@ try:
 
     logger.info("ChromaDB connected")
 
+    # Debug info
+    total_chunks = collection.count()
+    logger.info(f"Total chunks in collection: {total_chunks}")
+
 except Exception as e:
-
-    logger.exception(
-        f"Database initialization failed: {e}"
-    )
-
+    logger.exception(f"Database initialization failed: {e}")
     collection = None
