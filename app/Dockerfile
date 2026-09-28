@@ -2,11 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
 
-RUN pip install --no-cache-dir \
-    -r requirements.txt
+EXPOSE 8501
 
-EXPOSE 10000
-
-CMD ["uvicorn","main:app","--host","0.0.0.0","--port","10000"]
+CMD ["streamlit", "run", "streamlit_app.py", "--server.address=0.0.0.0", "--server.port=8501"]

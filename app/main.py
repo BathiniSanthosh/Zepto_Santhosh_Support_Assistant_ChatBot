@@ -1,24 +1,112 @@
+import logging
+
 from fastapi import FastAPI
 
-from app.graph import graph
-from app.models import AskRequest
-from app.models import AskResponse
+from models import (
+    QueryRequest,
+    AnswerResponse
+)
 
-app = FastAPI()
+from graph import graph
+from ingest import ingest_documents
+from db import collection
+
+logging.basicConfig(
+    level=logging.INFO
+)
+
+logger = logging.getLogger(__name__)
+
+logger.info("Loading main.py")
+
+app = FastAPI(
+    title="Zepto Support Assistant"
+)
+
+
+@app.on_event("startup")
+def startup():
+
+    logger.info(
+        "Application started"
+    )
+
+    try:
+        ingest_documents()
+
+    except Exception as e:
+
+        logger.exception(
+            f"Startup error: {e}"
+        )
+
+
+@app.get("/")
+def root():
+
+    try:
+
+        count = collection.count()
+
+        return {
+
+            "service":
+                "Zepto Support Assistant",
+
+            "status":
+                "healthy",
+
+            "documents_loaded":
+                count
+        }
+
+    except Exception:
+
+        return {
+
+            "service":
+                "Zepto Support Assistant",
+
+            "status":
+                "database unavailable",
+
+            "documents_loaded":
+                0
+        }
+
+
+@app.get("/stats")
+def stats():
+
+    return {
+
+        "documents_loaded":
+            collection.count()
+    }
 
 
 @app.post(
     "/ask",
-    response_model=AskResponse
+    response_model=AnswerResponse
 )
-def ask(request: AskRequest):
+def ask(request: QueryRequest):
 
-    result = graph.invoke({
-        "query": request.query
-    })
+    logger.info(
+        f"Question: {request.question}"
+    )
 
-    return AskResponse(
+    result = graph.invoke(
+        {
+            "question":
+                request.question
+        }
+    )
+
+    return AnswerResponse(
+
         answer=result["answer"],
+
         sources=result["sources"],
-        confidence=1.0
+
+        confidence=result["confidence"]
     )

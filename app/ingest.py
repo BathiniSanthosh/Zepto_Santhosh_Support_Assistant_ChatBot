@@ -1,40 +1,83 @@
-import os
-import chromadb
+from pathlib import Path
+import logging
 
-from sentence_transformers import SentenceTransformer
+from db import collection
 
-model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
-)
+logger = logging.getLogger(__name__)
 
-client = chromadb.PersistentClient(
-    path="chroma_db"
-)
+logger.info("Loading ingest.py")
 
-collection = client.get_or_create_collection(
-    name="zepto_support"
-)
 
-docs_folder = "docs"
+def ingest_documents():
 
-for filename in os.listdir(docs_folder):
+    try:
 
-    path = os.path.join(
-        docs_folder,
-        filename
-    )
+        if collection is None:
+            logger.error(
+                "Collection not available"
+            )
+            return
 
-    with open(path,"r",encoding="utf-8") as f:
-        text = f.read()
+        if collection.count() > 0:
 
-    embedding = model.encode(
-        text
-    ).tolist()
+            logger.info(
+                "Documents already exist"
+            )
 
-    collection.add(
-        ids=[filename],
-        documents=[text],
-        embeddings=[embedding]
-    )
+            return
 
-print("Loaded documents.")
+        docs = []
+        ids = []
+        metadatas = []
+
+        docs_folder = Path("docs")
+
+        if not docs_folder.exists():
+
+            logger.error(
+                "docs folder missing"
+            )
+
+            return
+
+        for file in docs_folder.glob("*.txt"):
+
+            logger.info(
+                f"Reading {file.name}"
+            )
+
+            text = file.read_text(
+                encoding="utf-8"
+            )
+
+            docs.append(text)
+
+            ids.append(file.stem)
+
+            metadatas.append(
+                {
+                    "source": file.name
+                }
+            )
+
+        if docs:
+
+            collection.add(
+                ids=ids,
+                documents=docs,
+                metadatas=metadatas
+            )
+
+            logger.info(
+                f"{len(docs)} documents added"
+            )
+
+    except Exception as e:
+
+        logger.exception(
+            f"Ingestion failed: {e}"
+        )
+
+
+if __name__ == "__main__":
+    ingest_documents()

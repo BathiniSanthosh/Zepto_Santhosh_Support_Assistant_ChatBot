@@ -1,9 +1,6 @@
 fastapi
 uvicorn
-langgraph
-langchain
 chromadb
-sentence-transformers
+langgraph
 pydantic
-groq
-python-dotenv
+streamlit

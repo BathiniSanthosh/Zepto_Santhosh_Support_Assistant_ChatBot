@@ -1,10 +1,14 @@
 from pydantic import BaseModel
 from typing import List
 
-class AskRequest(BaseModel):
-    query: str
+print("Loading models.py")
 
-class AskResponse(BaseModel):
+
+class QueryRequest(BaseModel):
+    question: str
+
+
+class AnswerResponse(BaseModel):
     answer: str
     sources: List[str]
     confidence: float
