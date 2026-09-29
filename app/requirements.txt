@@ -4,3 +4,4 @@ chromadb
 langgraph
 pydantic
 streamlit
+groq
